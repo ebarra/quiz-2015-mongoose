@@ -1,3 +1,7 @@
+<form id="search_form" action="/quizes" method="get">
+  <input type="text" name="search" placeholder="texto a buscar" value="<%=search_text ? search_text:""%>">
+  <input type="submit" value="Buscar">
+</form>
 <table>
   <% var i; for (i=0; i < quizes.length; i++) { %>        
     <tr>
@@ -17,6 +21,10 @@
     </tr> 
   <% } %>
 </table>
+<%if(quizes.length===0){%>
+<p>No se han encontrado preguntas.</p>
+
+<%}%>
 <p/>
 <%if(session.user){%>
   <a href="/quizes/new"><button>Crear pregunta</button></a>

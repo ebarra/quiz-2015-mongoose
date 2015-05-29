@@ -35,13 +35,19 @@ exports.load = function(req, res, next, quizId) {
 // GET /users/:userId/quizes
 exports.index = function(req, res) {  
   var options = {};
+  options.where = {};
+
   if(req.user){
-    options.where = {UserId: req.user.id}
+    options.where.UserId = req.user.id;
   }
-  
+  if(req.query.search){
+    var q = '%' + req.query.search.replace(" ", "%") + '%';
+    options.where.pregunta = {like: q };
+  }
+    
   models.Quiz.findAll(options).then(
     function(quizes) {
-      res.render('quizes/index.ejs', {quizes: quizes, errors: []});
+      res.render('quizes/index.ejs', {quizes: quizes, errors: [], search_text: req.query.search});
     }
   ).catch(function(error){next(error)});
 };
