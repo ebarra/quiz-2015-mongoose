@@ -10,11 +10,11 @@
 <p><a href="/quizes/<%= quiz.id %>/comments/new"><button>Nuevo comentario</button></a></p>
 
 <p><strong>Comentarios:</strong></p>
-<%for(index in quiz.Comments){%>
-	<%if(quiz.Comments[index].publicado){%>
-		<p>- <%=quiz.Comments[index].texto%></p>
-	<%} else if(session.user && (session.user.isAdmin || (session.user && quiz.UserId === session.user.id))){%>
-			<p>- <%=quiz.Comments[index].texto%>
-			<a href="/quizes/<%= quiz.id %>/comments/<%=quiz.Comments[index].id%>/publish"><button>Publicar</button></a></p>
+<%for(var i=0; i<quiz.comments.length;i++){%>
+	<%if(quiz.comments[i].publicado){%>
+		<p>- <%=quiz.comments[i].texto%></p>
+	<%} else if(session.user && (session.user.isAdmin || (session.user && quiz.autor.id === session.user.id))){%>
+			<p>- <%=quiz.comments[i].texto%>
+			<a href="/quizes/<%= quiz.id %>/comments/<%=i%>/publish"><button>Publicar</button></a></p>
 	<%}%>
 <%}%>

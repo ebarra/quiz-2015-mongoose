@@ -1,42 +1,23 @@
-var models = require('../models/models.js');
+var mongoose = require('mongoose');
+var Quiz = mongoose.model('Quiz');
+var User = mongoose.model('User');
+
 
 // MW que permite acciones solamente si el quiz al que pertenece el comentario objeto pertenece al usuario logeado o si es cuenta admin
-exports.ownershipRequired = function(req, res, next){
-    models.Quiz.find({
-            where: {
-                  id: Number(req.comment.QuizId)
-            }
-        }).then(function(quiz) {
-            if (quiz) {
-                var objQuizOwner = quiz.UserId;
-                var logUser = req.session.user.id;
-                var isAdmin = req.session.user.isAdmin;
+exports.ownershipRequired = function(req, res, next){    
+    if (req.quiz) {
+        var objQuizOwner = req.quiz.autor.id;
+        var logUser = req.session.user.id;
+        var isAdmin = req.session.user.isAdmin;
 
-                console.log(objQuizOwner, logUser, isAdmin);
+        console.log(objQuizOwner, logUser, isAdmin);
 
-                if (isAdmin || objQuizOwner === logUser) {
-                    next();
-                } else {
-                    res.redirect('/');
-                }
-            } else{next(new Error('No existe quizId=' + quizId))}
+        if (isAdmin || objQuizOwner === logUser) {
+            next();
+        } else {
+            res.redirect('/');
         }
-    ).catch(function(error){next(error)});
-};
-
-// Autoload :id de comentarios
-exports.load = function(req, res, next, commentId) {
-  models.Comment.find({
-            where: {
-                id: Number(commentId)
-            }
-        }).then(function(comment) {
-      if (comment) {
-        req.comment = comment;
-        next();
-      } else{next(new Error('No existe commentId=' + commentId))}
     }
-  ).catch(function(error){next(error)});
 };
 
 // GET /quizes/:quizId/comments/new
@@ -46,33 +27,32 @@ exports.new = function(req, res) {
 
 // POST /quizes/:quizId/comments
 exports.create = function(req, res) {
-  var comment = models.Comment.build(
-      { texto: req.body.comment.texto,          
-        QuizId: req.params.quizId
-        });
+  var comment = { texto: req.body.comment.texto, publicado: false,          
+                  autor: {id: req.session.user.id, username: req.session.user.username}};
 
-  comment
-  .validate()
-  .then(
-    function(err){
+  req.quiz.comments.push(comment);
+
+  req.quiz.save(function (err, saved_quiz) {
       if (err) {
-        res.render('comments/new.ejs', {comment: comment, errors: err.errors});
-      } else {
-        comment // save: guarda en DB campo texto de comment
-        .save()
-        .then( function(){ res.redirect('/quizes/'+req.params.quizId)}) 
-      }      // res.redirect: Redirección HTTP a lista de preguntas
-    }
-  ).catch(function(error){next(error)});
-  
+        return res.render('comments/new.ejs', {comment: comment, errors: err.errors});        
+      } else {     
+        console.log("Salvado el comentario");
+        res.redirect('/quizes/'+saved_quiz.id);
+      }         
+  });
 };
 
 // GET /quizes/:quizId/comments/:commentId/publish
+//commentId es el orden en el array
 exports.publish = function(req, res) {
-  req.comment.publicado = true;
-
-  req.comment.save( {fields: ["publicado"]})
-    .then( function(){ res.redirect('/quizes/'+req.params.quizId);} )
-    .catch(function(error){next(error)});
+  req.quiz.comments[req.params["commentId"]].publicado = true;
+  req.quiz.save(function (err, saved_quiz) {
+      if (err) {
+        next(err);        
+      } else {     
+        console.log("Publicado el comentario");
+        res.redirect('/quizes/'+saved_quiz.id);
+      }         
+  });
 
 };

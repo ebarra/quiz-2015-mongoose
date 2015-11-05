@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 var debug = require('debug')('quiz');
+
+var models = require('../models/models.js');
 var app = require('../app');
 var fs = require("fs");
 var https = require("https");
